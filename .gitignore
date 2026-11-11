@@ -22,6 +22,10 @@ data/reference/*
 results/*
 !results/.gitkeep
 
+# Private working notes (kept locally, not in git)
+docs/decisions.md
+docs/progress.md
+
 # OS / editors
 .DS_Store
 .vscode/
