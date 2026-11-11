@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.ipynb_checkpoints/
+.pytest_cache/
+
+# Environment / secrets
+.env
+
+# Data (never commit raw or processed rasters)
+data/raw/*
+data/processed/*
+data/reference/*
+!data/**/.gitkeep
+*.tif
+*.tiff
+*.nc
+*.zip
+
+# Results (regenerable)
+results/*
+!results/.gitkeep
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
