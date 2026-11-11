@@ -25,11 +25,17 @@ Each entry: decision, reason, alternatives considered, status.
 - **Alternatives considered:** Google Earth Engine (fast, but processing is server-side and opaque); Microsoft Planetary Computer STAC (good fallback); Copernicus Data Space (needs an account).
 - **Status:** Proposed.
 
-## D-003a — Always read reflectance scale/offset from STAC metadata
-- **Date:** 2026-11-10
-- **Decision:** Convert digital numbers to reflectance as `DN * scale + offset`, taking scale and offset from each asset's `raster:bands` metadata. Never hard-code them.
-- **Reasons:** Verified on Earth Search: offset is -0.1 for baseline ≥04.00 and 0 for older baselines. Ignoring it biases NDVI and EVI, especially in 2022 onwards (our drought year).
-- **Open:** Rule for duplicate items (`_0` vs reprocessed `_1`) — likely prefer the newest processing baseline for consistency. To be decided in Phase 3.
+## D-003a — Reflectance conversion for Earth Search Sentinel-2 L2A (CORRECTED 2026-11-11)
+- **Original decision (2026-11-10, WRONG):** Always apply `DN * scale + offset` using `raster:bands` metadata.
+- **Corrected decision (2026-11-11):** Use `reflectance = DN * scale`. Apply the `raster:bands` offset **only if** `earthsearch:boa_offset_applied` is not True. On Earth Search, items with that flag set to True already have the +1000 baseline-04.00 offset removed from the pixel values, even though `raster:bands` still lists `offset: -0.1`.
+- **How the error was found:** NDVI from `S2B_14TPL_20220721_0_L2A` came out at min/median/max = -7,838,315 / 1.51 / 1,060,320, which is physically impossible (NDVI must lie in [-1, 1]).
+- **Evidence (decimated read of tile 14TPL, non-zero pixels, DN percentiles p1/p5/p50/p95):**
+  - `S2B_14TPL_20220721_0_L2A` (baseline 04.00, flag True): red 212 / 236 / **444** / 1138; nir 1921 / 2477 / 3525 / 4738
+  - `S2A_14TPL_20210728_0_L2A` (baseline 03.01, flag False, offset 0): red 231 / 257 / **388** / 1000
+  - `S2A_14TPL_20210728_1_L2A` (baseline 05.00, flag True, offset -0.1): red 233 / 259 / **390** / 999
+  - The same scene under the old and new baselines has nearly identical DNs, so the +1000 is not present in the pixels. A baseline-04.00 red median of 444 is also far below the ~1000+ it would be if the offset were still in the data.
+- **Result after fix:** NDVI min/median/max = -0.29 / 0.78 / 0.94, which is plausible for mid-July cropland with rivers and lakes.
+- **Open:** Rule for duplicate items (`_0` vs reprocessed `_1`). Likely prefer the newest processing baseline for consistency. To be decided in Phase 3.
 
 ## D-004 — Defer PostgreSQL/PostGIS
 - **Date:** 2026-11-10
